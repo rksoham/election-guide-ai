@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Guide AI</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <header class="app-header">
+        <h1>Election Guide AI</h1>
+        <nav class="main-nav">
+            <button class="nav-btn" data-section="welcome-section">Home</button>
+            <button class="nav-btn" data-section="my-guide">My Guide</button>
+            <button class="nav-btn" data-section="polling-booth">Polling Booth</button>
+            <button class="nav-btn" data-section="how-to-vote">How to Vote</button>
+            <button class="nav-btn" data-section="election-process">Election Process</button>
+            <button class="nav-btn" data-section="timeline">Timeline</button>
+            <button class="nav-btn" data-section="eligibility">Eligibility</button>
+        </nav>
+    </header>
+
+    <main class="app-container">
+        <div class="content-panel">
+            <section id="welcome-section" class="content-section active">
+                <div class="welcome-header">
+                    <img src="https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?auto=format&fit=crop&q=80&w=800"
+                        alt="Voting box" class="welcome-image">
+                    <div class="welcome-text">
+                        <h2>Welcome to your Smart Election Assistant</h2>
+                        <p>Your one-stop guide to understanding the election process, checking your eligibility, and
+                            preparing to cast your vote.</p>
+                    </div>
+                </div>
+
+                <h3 class="dashboard-title">What would you like to do today?</h3>
+                <div class="dashboard-grid">
+                    <div class="dashboard-card" data-section="my-guide">
+                        <div class="card-icon">🚀</div>
+                        <h4>Start My Voting Guide</h4>
+                        <p>Get a personalized step-by-step preparation plan tailored to your profile.</p>
+                    </div>
+                    <div class="dashboard-card" data-section="how-to-vote">
+                        <div class="card-icon">🗳️</div>
+                        <h4>How to Vote</h4>
+                        <p>Learn the step-by-step process of casting your ballot successfully.</p>
+                    </div>
+                    <div class="dashboard-card" data-section="election-process">
+                        <div class="card-icon">🏛️</div>
+                        <h4>Election Process</h4>
+                        <p>Understand the democratic stages of selecting representatives.</p>
+                    </div>
+                    <div class="dashboard-card" data-section="timeline">
+                        <div class="card-icon">📅</div>
+                        <h4>Election Timeline</h4>
+                        <p>View important dates and upcoming events for the election.</p>
+                    </div>
+                    <div class="dashboard-card" data-section="eligibility">
+                        <div class="card-icon">✅</div>
+                        <h4>Check Eligibility</h4>
+                        <p>Make sure you meet the legal requirements to vote.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="how-to-vote" class="content-section">
+                <h2>How to Vote</h2>
+                <ol class="styled-list">
+                    <li><strong>Register to vote:</strong> Check your local deadlines and register online, by mail, or
+                        in person.</li>
+                    <li><strong>Find your polling place:</strong> Use your local election office website to locate your
+                        polling station.</li>
+                    <li><strong>Bring required IDs:</strong> Ensure you have the necessary identification needed for
+                        your region.</li>
+                    <li><strong>Cast your ballot:</strong> Follow the instructions at the polling station to make your
+                        choices.</li>
+                </ol>
+            </section>
+
+            <section id="election-process" class="content-section">
+                <h2>Election Process</h2>
+                <p>The election process involves several critical stages designed to ensure fair and democratic
+                    representation.</p>
+                <br>
+                <p><strong>1. Declaration & Campaigning:</strong> Candidates declare their intent to run and begin
+                    interacting with constituents.</p>
+                <p><strong>2. Primary Elections:</strong> Voters choose candidates to represent their respective
+                    political parties.</p>
+                <p><strong>3. General Election:</strong> The final voting process where registered voters decide the
+                    winners across various offices.</p>
+            </section>
+
+            <section id="timeline" class="content-section">
+                <h2>Election Timeline</h2>
+                <ul class="timeline-list">
+                    <li><strong>January:</strong> Candidate declarations start</li>
+                    <li><strong>March - June:</strong> Primary Elections</li>
+                    <li><strong>July - August:</strong> National Party Conventions</li>
+                    <li><strong>September - October:</strong> Presidential Debates</li>
+                    <li><strong>November:</strong> Election Day (First Tuesday of the month)</li>
+                </ul>
+            </section>
+
+            <section id="eligibility" class="content-section">
+                <h2>Eligibility Check</h2>
+                <p>Check if you are eligible to vote by answering the prompt below, or asking the chat assistant.</p>
+                <div class="eligibility-widget">
+                    <label for="age-input">Enter your age:</label>
+                    <input type="number" id="age-input" min="0" placeholder="e.g. 20">
+                    <button id="check-eligibility-btn">Check Eligibility</button>
+                    <p id="eligibility-result"></p>
+                </div>
+            </section>
+
+            <section id="my-guide" class="content-section">
+                <h2>Personalized Voting Guide</h2>
+
+                <div id="guide-intro" class="guide-step active-step">
+                    <p id="guide-intro-text">Get a step-by-step personalized guide on how to prepare for voting based on
+                        your details.</p>
+                    <button id="start-guide-btn" class="guide-btn primary-btn" style="margin-top: 1.5rem;">Start My
+                        Voting Guide</button>
+                    <button id="intro-reset-btn" class="guide-btn outline-btn"
+                        style="margin-top: 1.5rem; display: none; margin-left: 0.5rem;">Reset Stored Data</button>
+                </div>
+
+                <div id="guide-q1" class="guide-step">
+                    <h3>Step 1: What is your age?</h3>
+                    <input type="number" id="guide-age" placeholder="e.g. 20" min="0">
+                    <button id="guide-next-1" class="guide-btn">Next</button>
+                </div>
+
+                <div id="guide-q2" class="guide-step">
+                    <h3>Step 2: Are you a first-time voter?</h3>
+                    <div class="guide-options">
+                        <button class="guide-btn option-btn" data-value="yes">Yes</button>
+                        <button class="guide-btn option-btn" data-value="no">No</button>
+                    </div>
+                </div>
+
+                <div id="guide-q3" class="guide-step">
+                    <h3>Step 3: Do you have a Voter ID?</h3>
+                    <div class="guide-options">
+                        <button class="guide-btn option-btn" data-value="yes">Yes</button>
+                        <button class="guide-btn option-btn" data-value="no">No</button>
+                    </div>
+                </div>
+
+                <div id="guide-result" class="guide-step result-card">
+                    <h3 id="result-title"></h3>
+                    <div id="result-content"></div>
+                    <button id="restart-guide-btn" class="guide-btn outline-btn" style="margin-top: 2rem;">Restart
+                        Guide</button>
+                </div>
+            </section>
+
+            <section id="polling-booth" class="content-section">
+                <h2>Find My Polling Booth</h2>
+                <div class="booth-search-container">
+                    <p>Enter your city or area to find your nearest polling booth and voting details.</p>
+                    <div class="booth-search-box">
+                        <input type="text" id="booth-location-input"
+                            placeholder="e.g. Bangalore, Maharashtra, or Khera village...">
+                        <button id="find-booth-btn" class="guide-btn primary-btn">Search</button>
+                    </div>
+                </div>
+
+                <div id="booth-result" class="result-card" style="display: none; margin-top: 2rem;">
+                    <h3 id="booth-result-title"></h3>
+                    <div id="booth-result-details"></div>
+                </div>
+            </section>
+        </div>
+
+        <aside class="assistant-panel">
+            <div class="mini-chat-card">
+                <h3>💬 Ask AI Assistant</h3>
+                <p>Have a quick question? Ask me right here or open the full chat below.</p>
+                <div class="mini-chat-input-area">
+                    <input type="text" id="mini-chat-input" placeholder="e.g. How to vote?">
+                    <button id="mini-send-btn">Ask</button>
+                </div>
+                <div class="chat-suggestions mini-suggestions"
+                    style="border:none; padding:0; flex-wrap:wrap; margin-top:0.8rem; justify-content: flex-start;">
+                    <button class="sugg-btn">How to vote?</button>
+                    <button class="sugg-btn">Am I eligible?</button>
+                    <button class="sugg-btn">Documents required?</button>
+                </div>
+            </div>
+
+            <div class="history-container">
+                <h3>Query History</h3>
+                <p class="history-sub">Simulated Google Storage</p>
+
+                <div class="history-list-wrapper">
+                    <ul id="query-history-list"></ul>
+                </div>
+
+                <button id="clear-history-btn">Clear History</button>
+            </div>
+        </aside>
+    </main>
+
+    <!-- Floating Chat Widget -->
+    <button id="floating-chat-btn" class="floating-btn">💬 Chat</button>
+
+    <div id="chat-popup" class="chat-popup hidden">
+        <div class="chat-popup-header">
+            <h3>💬 Election Guide AI</h3>
+            <button id="close-chat-btn" class="close-btn">&times;</button>
+        </div>
+        <div class="chat-popup-messages" id="chat-messages">
+            <div class="message ai-message">
+                Hello! I am your Election Guide AI. Ask me about voting, eligibility, or the election process!
+            </div>
+        </div>
+        <div class="chat-suggestions">
+            <button class="sugg-btn">How to vote?</button>
+            <button class="sugg-btn">Am I eligible?</button>
+            <button class="sugg-btn">Documents required?</button>
+        </div>
+        <div class="chat-popup-input">
+            <input type="text" id="chat-input" placeholder="Type your query here...">
+            <button id="send-btn">Send</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
