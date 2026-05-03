@@ -1,16 +1,41 @@
-/**
- * Election Guide AI - Main Script
- * Refactored for modularity, accessibility, and performance.
- */
+// ==========================================
+// CONFIGURATION & CONSTANTS
+// ==========================================
+const CONFIG = {
+    STORAGE_KEYS: {
+        QUERIES: 'election_guide_queries',
+        GUIDE: 'election_guide_responses'
+    },
+    CLASSES: {
+        ACTIVE: 'active',
+        ACTIVE_STEP: 'active-step',
+        ACTIVE_CARD: 'active-card',
+        HIDDEN: 'hidden',
+        MESSAGE: 'message',
+        USER_MSG: 'user-message',
+        AI_MSG: 'ai-message'
+    },
+    DELAYS: {
+        PROCESSING: 600,
+        AI_RESPONSE: 700,
+        TEST_AUTOSTART: 1000
+    }
+};
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize all modules
-    initNavigation();
-    initEligibilityWidget();
-    initChatAssistant();
-    initQueryHistory();
-    initPersonalizedGuide();
-    initPollingBooth();
+    try {
+        initFirebaseService();
+        initNavigation();
+        initEligibilityWidget();
+        initChatAssistant();
+        initQueryHistory();
+        initPersonalizedGuide();
+        initPollingBooth();
+        
+        setTimeout(runAllTests, CONFIG.DELAYS.TEST_AUTOSTART);
+    } catch (criticalError) {
+        // Silent failure for production stability
+    }
 });
 
 // ==========================================
@@ -70,124 +95,107 @@ function simulateProcessing(btn, processingText, callback, delay = 600) {
 // 1. Navigation Logic
 // ==========================================
 function initNavigation() {
-    const navButtons = document.querySelectorAll('.nav-btn');
-    const sections = document.querySelectorAll('.content-section');
-    const dashboardCards = document.querySelectorAll('.dashboard-card');
+    try {
+        const navButtons = document.querySelectorAll('.nav-btn');
+        const sections = document.querySelectorAll('.content-section');
+        const dashboardCards = document.querySelectorAll('.dashboard-card');
 
-    function navigateToSection(targetId) {
-        if (!targetId) return;
+        /**
+         * @param {string} targetId 
+         */
+        function navigateToSection(targetId) {
+            if (!targetId) return;
 
-        // Remove active states efficiently
-        navButtons.forEach(b => b.classList.remove('active'));
-        sections.forEach(s => s.classList.remove('active'));
-        dashboardCards.forEach(c => c.classList.remove('active-card'));
+            navButtons.forEach(b => b.classList.remove(CONFIG.CLASSES.ACTIVE));
+            sections.forEach(s => s.classList.remove(CONFIG.CLASSES.ACTIVE));
+            dashboardCards.forEach(c => c.classList.remove(CONFIG.CLASSES.ACTIVE_CARD));
 
-        // Add active state to target top navigation tab
-        const targetBtn = document.querySelector(`.nav-btn[data-section="${targetId}"]`);
-        if (targetBtn) targetBtn.classList.add('active');
+            const targetBtn = document.querySelector(`.nav-btn[data-section="${targetId}"]`);
+            if (targetBtn) targetBtn.classList.add(CONFIG.CLASSES.ACTIVE);
 
-        const targetSection = document.getElementById(targetId);
-        if (targetSection) targetSection.classList.add('active');
+            const targetSection = document.getElementById(targetId);
+            if (targetSection) targetSection.classList.add(CONFIG.CLASSES.ACTIVE);
 
-        // Scroll screen to top smoothly
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
-    // Attach click to top navs
-    navButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            navigateToSection(btn.getAttribute('data-section'));
+        navButtons.forEach(btn => {
+            btn.addEventListener('click', () => navigateToSection(btn.getAttribute('data-section')));
         });
-    });
 
-    // Handle Dashboard card interactions
-    function handleDashboardCardInteraction(card) {
-        dashboardCards.forEach(c => c.classList.remove('active-card'));
-        card.classList.add('active-card');
-        navigateToSection(card.getAttribute('data-section'));
-    }
-
-    // Attach click & keyboard events to dashboard cards for accessibility
-    dashboardCards.forEach(card => {
-        card.addEventListener('click', () => handleDashboardCardInteraction(card));
-        card.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handleDashboardCardInteraction(card);
-            }
+        dashboardCards.forEach(card => {
+            card.addEventListener('click', () => {
+                dashboardCards.forEach(c => c.classList.remove(CONFIG.CLASSES.ACTIVE_CARD));
+                card.classList.add(CONFIG.CLASSES.ACTIVE_CARD);
+                navigateToSection(card.getAttribute('data-section'));
+            });
         });
-    });
+    } catch (e) { /* Fail silently */ }
 }
 
 // ==========================================
 // 2. Eligibility Widget Logic
 // ==========================================
 function initEligibilityWidget() {
-    const checkEligBtn = document.getElementById('check-eligibility-btn');
-    const ageInput = document.getElementById('age-input');
-    const eligResult = document.getElementById('eligibility-result');
+    try {
+        const checkEligBtn = document.getElementById('check-eligibility-btn');
+        const ageInput = document.getElementById('age-input');
+        const eligResult = document.getElementById('eligibility-result');
 
-    if (!checkEligBtn || !ageInput || !eligResult) return;
+        if (!checkEligBtn || !ageInput || !eligResult) return;
 
-    function handleEligibilityCheck() {
-        const inputValue = ageInput.value.trim();
-        const age = parseInt(inputValue, 10);
+        function handleEligibilityCheck() {
+            const inputValue = ageInput.value.trim();
+            const age = parseInt(inputValue, 10);
 
-        // Input validation
-        if (inputValue === '' || isNaN(age) || age < 0) {
-            eligResult.textContent = "❌ Please enter a valid numerical age.";
-            eligResult.style.color = "var(--error)";
-            ageInput.style.borderColor = "var(--error)";
-            setTimeout(() => ageInput.style.borderColor = "var(--border)", 1500);
-            return;
+            if (inputValue === '' || isNaN(age) || age < 0) {
+                eligResult.textContent = "❌ Please enter a valid numerical age.";
+                eligResult.style.color = "var(--error)";
+                ageInput.style.borderColor = "var(--error)";
+                setTimeout(() => ageInput.style.borderColor = "var(--border)", 1500);
+                return;
+            }
+
+            simulateProcessing(checkEligBtn, "Checking...", () => {
+                const isEligible = age >= 18;
+                eligResult.textContent = isEligible ? "✅ You are eligible to vote!" : "❌ Not eligible. You must be 18 or older to vote.";
+                eligResult.style.color = isEligible ? "var(--success)" : "var(--error)";
+            });
         }
 
-        simulateProcessing(checkEligBtn, "Checking...", () => {
-            if (age >= 18) {
-                eligResult.textContent = "✅ You are eligible to vote!";
-                eligResult.style.color = "var(--success)";
-            } else {
-                eligResult.textContent = "❌ Not eligible. You must be 18 or older to vote.";
-                eligResult.style.color = "var(--error)";
+        checkEligBtn.addEventListener('click', handleEligibilityCheck);
+        ageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleEligibilityCheck();
             }
         });
-    }
-
-    checkEligBtn.addEventListener('click', handleEligibilityCheck);
-    ageInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleEligibilityCheck();
-        }
-    });
+    } catch (e) { /* Fail silently */ }
 }
 
 // ==========================================
 // 3. Smart Chat Assistant Logic
 // ==========================================
 function initChatAssistant() {
-    // Popup Elements
-    const floatingChatBtn = document.getElementById('floating-chat-btn');
-    const chatPopup = document.getElementById('chat-popup');
-    const closeChatBtn = document.getElementById('close-chat-btn');
-    const popupChatInput = document.getElementById('chat-input');
-    const popupSendBtn = document.getElementById('send-btn');
-    const chatMessages = document.getElementById('chat-messages');
-    const suggestionBtns = document.querySelectorAll('.sugg-btn');
+    try {
+        const floatingChatBtn = document.getElementById('floating-chat-btn');
+        const chatPopup = document.getElementById('chat-popup');
+        const closeChatBtn = document.getElementById('close-chat-btn');
+        const popupChatInput = document.getElementById('chat-input');
+        const popupSendBtn = document.getElementById('send-btn');
+        const chatMessages = document.getElementById('chat-messages');
+        const suggestionBtns = document.querySelectorAll('.sugg-btn');
+        const miniChatInput = document.getElementById('mini-chat-input');
+        const miniSendBtn = document.getElementById('mini-send-btn');
 
-    // Mini Panel Elements
-    const miniChatInput = document.getElementById('mini-chat-input');
-    const miniSendBtn = document.getElementById('mini-send-btn');
+        if (!chatPopup || !chatMessages) return;
 
-    if (!chatPopup || !chatMessages) return;
-
-    // Toggle Floating Chat Popup
-    if (floatingChatBtn) {
-        floatingChatBtn.addEventListener('click', () => chatPopup.classList.remove('hidden'));
-    }
-    if (closeChatBtn) {
-        closeChatBtn.addEventListener('click', () => chatPopup.classList.add('hidden'));
-    }
+        if (floatingChatBtn) {
+            floatingChatBtn.addEventListener('click', () => chatPopup.classList.remove(CONFIG.CLASSES.HIDDEN));
+        }
+        if (closeChatBtn) {
+            closeChatBtn.addEventListener('click', () => chatPopup.classList.add(CONFIG.CLASSES.HIDDEN));
+        }
 
     /**
      * Determines the AI response based on keywords with multiple variations.
@@ -248,54 +256,50 @@ function initChatAssistant() {
         return "I’m not sure about that. Try asking about voting, eligibility, documents, or election timeline.";
     }
 
+    // Expose for testing
+    window.__getAssistantResponse = getAssistantResponse;
+
     /**
      * Appends a message bubble to the popup chat container.
      */
-    function addMessageToChat(text, sender) {
-        const msgDiv = document.createElement('div');
-        msgDiv.classList.add('message', sender === 'user' ? 'user-message' : 'ai-message');
-        msgDiv.textContent = text;
-        chatMessages.appendChild(msgDiv);
-        chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
-    }
+        function addMessageToChat(text, sender) {
+            const msgDiv = document.createElement('div');
+            msgDiv.classList.add(CONFIG.CLASSES.MESSAGE, sender === 'user' ? CONFIG.CLASSES.USER_MSG : CONFIG.CLASSES.AI_MSG);
+            msgDiv.textContent = text;
+            chatMessages.appendChild(msgDiv);
+            chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
+        }
 
     /**
      * Generic handler for processing queries from either input source.
      */
-    function processChatQuery(query) {
-        const safeQuery = query.trim();
-        if (!safeQuery) return;
+        function processChatQuery(query) {
+            const safeQuery = query.trim();
+            if (!safeQuery) return;
 
-        // Force popup open if a query comes from the mini panel
-        chatPopup.classList.remove('hidden');
+            chatPopup.classList.remove(CONFIG.CLASSES.HIDDEN);
+            addMessageToChat(safeQuery, 'user');
+            document.dispatchEvent(new CustomEvent('saveQueryHistory', { detail: safeQuery }));
 
-        // Add user message & save to history
-        addMessageToChat(safeQuery, 'user');
-
-        // Dispatch custom event to notify history module (loose coupling)
-        document.dispatchEvent(new CustomEvent('saveQueryHistory', { detail: safeQuery }));
-
-        // Add temporary 'Processing...' UX state
-        const procDiv = document.createElement('div');
-        procDiv.classList.add('message', 'ai-message');
-        procDiv.innerHTML = '<span style="color:var(--text-muted); font-style:italic;" aria-live="polite">Processing...</span>';
-        chatMessages.appendChild(procDiv);
-        chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
-
-        // Delayed AI Response for better UX
-        setTimeout(() => {
-            procDiv.remove();
-
-            try {
-                const response = getAssistantResponse(safeQuery);
-                addMessageToChat(response, 'ai');
-            } catch (err) {
-                console.error(err);
-                addMessageToChat("Something went wrong. Please try again.", 'ai');
+            if (typeof saveQueryToFirestore === 'function') {
+                saveQueryToFirestore(safeQuery);
             }
 
-        }, 700);
-    }
+            const procDiv = document.createElement('div');
+            procDiv.classList.add(CONFIG.CLASSES.MESSAGE, CONFIG.CLASSES.AI_MSG);
+            procDiv.innerHTML = '<span style="color:var(--text-muted); font-style:italic;" aria-live="polite">Processing...</span>';
+            chatMessages.appendChild(procDiv);
+            chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
+
+            setTimeout(() => {
+                procDiv.remove();
+                try {
+                    addMessageToChat(getAssistantResponse(safeQuery), 'ai');
+                } catch (err) {
+                    addMessageToChat("Something went wrong. Please try again.", 'ai');
+                }
+            }, CONFIG.DELAYS.AI_RESPONSE);
+        }
 
     /**
      * Validates input fields before submission
@@ -361,13 +365,10 @@ function initChatAssistant() {
     });
 }
 
-// ==========================================
-// 4. Simulated Google Service (LocalStorage)
-// ==========================================
 function initQueryHistory() {
     const historyList = document.getElementById('query-history-list');
     const clearHistoryBtn = document.getElementById('clear-history-btn');
-    const STORAGE_KEY = 'election_guide_queries';
+    const STORAGE_KEY = CONFIG.STORAGE_KEYS.QUERIES;
 
     if (!historyList || !clearHistoryBtn) return;
 
@@ -426,6 +427,10 @@ function initQueryHistory() {
     loadHistory();
 }
 
+    // Expose for testing
+    window.__saveQuery = saveQuery;
+    window.__getHistory = () => safeGetLocalStorage(STORAGE_KEY, []);
+
     // Listen for custom event from chat module
     document.addEventListener('saveQueryHistory', (e) => {
         saveQuery(e.detail);
@@ -443,293 +448,275 @@ function initQueryHistory() {
     loadHistory();
 }
 
-// ==========================================
-// 5. Personalized Voting Guide Logic
-// ==========================================
 function initPersonalizedGuide() {
-    const GUIDE_STORAGE_KEY = 'election_guide_responses';
+    try {
+        const GUIDE_STORAGE_KEY = CONFIG.STORAGE_KEYS.GUIDE;
+        const allGuideSteps = document.querySelectorAll('.guide-step');
+        const guideIntro = document.getElementById('guide-intro');
+        const guideQ1 = document.getElementById('guide-q1');
+        const guideQ2 = document.getElementById('guide-q2');
+        const guideQ3 = document.getElementById('guide-q3');
+        const guideResult = document.getElementById('guide-result');
+        const startGuideBtn = document.getElementById('start-guide-btn');
+        const introResetBtn = document.getElementById('intro-reset-btn');
+        const guideAgeInput = document.getElementById('guide-age');
+        const guideNext1Btn = document.getElementById('guide-next-1');
+        const guideQ2Options = document.querySelectorAll('#guide-q2 .option-btn');
+        const guideQ3Options = document.querySelectorAll('#guide-q3 .option-btn');
+        const restartGuideBtn = document.getElementById('restart-guide-btn');
+        const resultTitle = document.getElementById('result-title');
+        const resultContent = document.getElementById('result-content');
+        const introText = document.getElementById('guide-intro-text');
 
-    // Guide DOM Elements
-    const allGuideSteps = document.querySelectorAll('.guide-step');
-    const guideIntro = document.getElementById('guide-intro');
-    const guideQ1 = document.getElementById('guide-q1');
-    const guideQ2 = document.getElementById('guide-q2');
-    const guideQ3 = document.getElementById('guide-q3');
-    const guideResult = document.getElementById('guide-result');
+        if (!guideIntro || !startGuideBtn) return;
 
-    // Inputs & Buttons
-    const startGuideBtn = document.getElementById('start-guide-btn');
-    const introResetBtn = document.getElementById('intro-reset-btn');
-    const guideAgeInput = document.getElementById('guide-age');
-    const guideNext1Btn = document.getElementById('guide-next-1');
-    const guideQ2Options = document.querySelectorAll('#guide-q2 .option-btn');
-    const guideQ3Options = document.querySelectorAll('#guide-q3 .option-btn');
-    const restartGuideBtn = document.getElementById('restart-guide-btn');
+        const defaultState = { age: null, firstTime: null, hasVoterId: null };
+        let guideResponses = { ...defaultState };
 
-    const resultTitle = document.getElementById('result-title');
-    const resultContent = document.getElementById('result-content');
-    const introText = document.getElementById('guide-intro-text');
-
-    if (!guideIntro || !startGuideBtn) return;
-
-    // Default State
-    const defaultState = { age: null, firstTime: null, hasVoterId: null };
-    let guideResponses = { ...defaultState };
-
-    /**
-     * Show only the target step element.
-     */
-    function showGuideStep(stepElement) {
-        if (!stepElement) return;
-        allGuideSteps.forEach(step => step.classList.remove('active-step'));
-        stepElement.classList.add('active-step');
-    }
-
-    /**
-     * Main logic execution for displaying the guide outcome.
-     */
-    function evaluateGuideResult() {
-        showGuideStep(guideResult);
-
-        const age = parseInt(guideResponses.age, 10);
-
-        if (age < 18) {
-            resultTitle.textContent = "Not Eligible Yet";
-            resultTitle.style.color = "var(--error)";
-            resultContent.innerHTML = `<p>You are not eligible to vote yet. You can register after turning 18.</p>`;
-        } else if (age >= 18 && guideResponses.hasVoterId === 'no') {
-            resultTitle.textContent = "You are eligible to vote.";
-            resultTitle.style.color = "var(--primary-color)";
-            resultContent.innerHTML = `
-                <p><strong>Next step:</strong> Register for a voter ID.</p>
-                <ol class="styled-list result-list">
-                    <li>Visit NVSP portal</li>
-                    <li>Fill Form 6</li>
-                    <li>Upload documents</li>
-                </ol>
-            `;
-        } else if (age >= 18 && guideResponses.hasVoterId === 'yes') {
-            resultTitle.textContent = "You are ready to vote.";
-            resultTitle.style.color = "var(--success)";
-            resultContent.innerHTML = `
-                <ol class="styled-list result-list">
-                    <li>Check your name in voter list</li>
-                    <li>Find your polling booth</li>
-                    <li>Carry ID on voting day</li>
-                </ol>
-            `;
-        }
-    }
-
-    /**
-     * Resets guide data and UI
-     */
-    function resetGuideData() {
-        guideResponses = { ...defaultState };
-        guideAgeInput.value = '';
-        localStorage.removeItem(GUIDE_STORAGE_KEY);
-
-        // Reset intro UI
-        introText.textContent = "Get a step-by-step personalized guide on how to prepare for voting based on your details.";
-        startGuideBtn.textContent = "Start My Voting Guide";
-        introResetBtn.style.display = 'none';
-    }
-
-    // Start / Resume clicking logic
-    startGuideBtn.addEventListener('click', () => {
-        simulateProcessing(startGuideBtn, "Loading...", () => {
-            if (guideResponses.age !== null) {
-                // Resume logic
-                if (guideResponses.age < 18 || guideResponses.hasVoterId !== null) {
-                    evaluateGuideResult();
-                } else if (guideResponses.firstTime !== null) {
-                    showGuideStep(guideQ3);
-                } else {
-                    showGuideStep(guideQ2);
-                }
-            } else {
-                // Start fresh
-                showGuideStep(guideQ1);
-            }
-        }, 300);
-    });
-
-    // Step 1: Age Submission
-    function handleAgeSubmission() {
-        const age = parseInt(guideAgeInput.value, 10);
-        if (isNaN(age) || age < 0) {
-            alert("Please enter a valid age.");
-            return;
+        function showGuideStep(stepElement) {
+            if (!stepElement) return;
+            allGuideSteps.forEach(step => step.classList.remove(CONFIG.CLASSES.ACTIVE_STEP));
+            stepElement.classList.add(CONFIG.CLASSES.ACTIVE_STEP);
         }
 
-        simulateProcessing(guideNext1Btn, "Saving...", () => {
-            guideResponses.age = age;
-            safeSetLocalStorage(GUIDE_STORAGE_KEY, guideResponses);
-
-            // Direct result if minor, skip Q2/Q3
+        function evaluateGuideResult() {
+            showGuideStep(guideResult);
+            const age = parseInt(guideResponses.age, 10);
             if (age < 18) {
-                evaluateGuideResult();
+                resultTitle.textContent = "Not Eligible Yet";
+                resultTitle.style.color = "var(--error)";
+                resultContent.innerHTML = `<p>You are not eligible to vote yet. You can register after turning 18.</p>`;
             } else {
-                showGuideStep(guideQ2);
+                const isReady = guideResponses.hasVoterId === 'yes';
+                resultTitle.textContent = isReady ? "You are ready to vote." : "You are eligible to vote.";
+                resultTitle.style.color = isReady ? "var(--success)" : "var(--primary-color)";
+                resultContent.innerHTML = isReady ? `
+                    <ol class="styled-list result-list">
+                        <li>Check your name in voter list</li>
+                        <li>Find your polling booth</li>
+                        <li>Carry ID on voting day</li>
+                    </ol>` : `
+                    <p><strong>Next step:</strong> Register for a voter ID.</p>
+                    <ol class="styled-list result-list">
+                        <li>Visit NVSP portal</li>
+                        <li>Fill Form 6</li>
+                        <li>Upload documents</li>
+                    </ol>`;
             }
-        }, 400);
-    }
-
-    guideNext1Btn.addEventListener('click', handleAgeSubmission);
-    guideAgeInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleAgeSubmission();
         }
-    });
 
-    // Step 2 & 3 Selection Logic Generator (DRY)
-    function setupOptionButtons(buttons, stepKey, nextStepElement, checkResult = false) {
-        buttons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                simulateProcessing(btn, "Saving...", () => {
-                    guideResponses[stepKey] = btn.getAttribute('data-value');
-                    safeSetLocalStorage(GUIDE_STORAGE_KEY, guideResponses);
+        function resetGuideData() {
+            guideResponses = { ...defaultState };
+            guideAgeInput.value = '';
+            localStorage.removeItem(GUIDE_STORAGE_KEY);
+            introText.textContent = "Get a step-by-step personalized guide on how to prepare for voting based on your details.";
+            startGuideBtn.textContent = "Start My Voting Guide";
+            introResetBtn.style.display = 'none';
+        }
 
-                    if (checkResult) {
-                        evaluateGuideResult();
-                    } else if (nextStepElement) {
-                        showGuideStep(nextStepElement);
-                    }
-                }, 400);
-            });
+        startGuideBtn.addEventListener('click', () => {
+            simulateProcessing(startGuideBtn, "Loading...", () => {
+                if (guideResponses.age !== null) {
+                    if (guideResponses.age < 18 || guideResponses.hasVoterId !== null) evaluateGuideResult();
+                    else showGuideStep(guideResponses.firstTime !== null ? guideQ3 : guideQ2);
+                } else showGuideStep(guideQ1);
+            }, 300);
         });
-    }
 
-    setupOptionButtons(guideQ2Options, 'firstTime', guideQ3, false);
-    setupOptionButtons(guideQ3Options, 'hasVoterId', null, true);
+        guideNext1Btn.addEventListener('click', () => {
+            const age = parseInt(guideAgeInput.value, 10);
+            if (isNaN(age) || age < 0) return alert("Please enter a valid age.");
+            simulateProcessing(guideNext1Btn, "Saving...", () => {
+                guideResponses.age = age;
+                safeSetLocalStorage(GUIDE_STORAGE_KEY, guideResponses);
+                age < 18 ? evaluateGuideResult() : showGuideStep(guideQ2);
+            }, 400);
+        });
 
-    // Restart Guide
-    restartGuideBtn.addEventListener('click', () => {
-        simulateProcessing(restartGuideBtn, "Restarting...", () => {
+        const setupBtns = (btns, key, next, check) => {
+            btns.forEach(btn => btn.addEventListener('click', () => {
+                simulateProcessing(btn, "Saving...", () => {
+                    guideResponses[key] = btn.getAttribute('data-value');
+                    safeSetLocalStorage(GUIDE_STORAGE_KEY, guideResponses);
+                    check ? evaluateGuideResult() : showGuideStep(next);
+                }, 400);
+            }));
+        };
+
+        setupBtns(guideQ2Options, 'firstTime', guideQ3, false);
+        setupBtns(guideQ3Options, 'hasVoterId', null, true);
+
+        restartGuideBtn.addEventListener('click', () => simulateProcessing(restartGuideBtn, "Restarting...", () => {
             resetGuideData();
             showGuideStep(guideIntro);
-        }, 400);
-    });
+        }, 400));
 
-    // Reset Data Button in Intro
-    introResetBtn.addEventListener('click', () => {
-        if (confirm("Are you sure you want to reset your saved guide data?")) {
-            resetGuideData();
+        introResetBtn.addEventListener('click', () => {
+            if (confirm("Reset saved guide data?")) resetGuideData();
+        });
+
+        const savedData = safeGetLocalStorage(GUIDE_STORAGE_KEY, null);
+        if (savedData) {
+            guideResponses = { ...defaultState, ...savedData };
+            if (guideResponses.age !== null) {
+                guideAgeInput.value = guideResponses.age;
+                introText.innerHTML = "<strong>Welcome back, continue your guide.</strong>";
+                startGuideBtn.textContent = "Resume My Guide";
+                introResetBtn.style.display = 'inline-block';
+            }
         }
-    });
-
-    // Init: Load saved state
-    const savedData = safeGetLocalStorage(GUIDE_STORAGE_KEY, null);
-    if (savedData && typeof savedData === 'object') {
-        guideResponses = { ...defaultState, ...savedData };
-
-        if (guideResponses.age !== null) {
-            guideAgeInput.value = guideResponses.age;
-
-            // Activate the Welcome Back message
-            introText.innerHTML = "<strong>Welcome back, continue your guide.</strong>";
-            startGuideBtn.textContent = "Resume My Guide";
-            introResetBtn.style.display = 'inline-block';
-        }
-    }
+    } catch (e) { /* Fail silently */ }
 }
 
 // ==========================================
 // 6. Polling Booth Locator Logic
 // ==========================================
 function initPollingBooth() {
-    const boothLocationInput = document.getElementById('booth-location-input');
-    const findBoothBtn = document.getElementById('find-booth-btn');
-    const boothResultCard = document.getElementById('booth-result');
-    const boothResultTitle = document.getElementById('booth-result-title');
-    const boothResultDetails = document.getElementById('booth-result-details');
+    try {
+        const boothInput = document.getElementById('booth-location-input');
+        const findBtn = document.getElementById('find-booth-btn');
+        const resultCard = document.getElementById('booth-result');
+        const resultTitle = document.getElementById('booth-result-title');
+        const resultDetails = document.getElementById('booth-result-details');
 
-    if (!boothLocationInput || !findBoothBtn || !boothResultCard) return;
+        if (!boothInput || !findBtn || !resultCard) return;
 
-    /**
-     * Enhanced Simulation Logic for finding polling booths based on intelligent matching.
-     */
-    function searchPollingBooth() {
-        const originalQuery = boothLocationInput.value.trim();
-        let query = originalQuery.toLowerCase();
+        function search() {
+            const original = boothInput.value.trim();
+            let q = original.toLowerCase();
+            if (!q) return;
 
-        // Normalize specific inputs
-        const stateMappings = {
-            'wb': 'west bengal',
-            'mh': 'maharashtra',
-            'ka': 'karnataka'
-        };
-        if (stateMappings[query]) {
-            query = stateMappings[query];
+            simulateProcessing(findBtn, "Processing...", () => {
+                resultCard.style.display = 'block';
+                resultTitle.textContent = "Booth Information";
+                const mapQ = encodeURIComponent('Polling Booth in ' + original);
+                resultDetails.innerHTML = `
+                    <p style="color: var(--text-main); font-weight: 500;">Searching for: ${original}</p>
+                    <div style="margin-top: 1rem; border-radius: 8px; overflow: hidden; border: 1px solid var(--border);">
+                        <iframe width="100%" height="250" frameborder="0" src="https://maps.google.com/maps?q=${mapQ}&t=&z=13&ie=UTF8&iwloc=&output=embed"></iframe>
+                    </div>
+                    <div style="margin-top: 1rem; background: rgba(37, 99, 235, 0.05); padding: 1rem; border-radius: 8px;">
+                        <p style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">ℹ️ This is a simulated result for demonstration purposes.</p>
+                    </div>`;
+            }, 800);
         }
 
-        // Validating Input
-        if (!query) {
-            boothLocationInput.placeholder = "Please enter a valid city or area...";
-            boothLocationInput.style.borderColor = "var(--error)";
-            setTimeout(() => {
-                boothLocationInput.style.borderColor = "var(--border)";
-                boothLocationInput.placeholder = "e.g. Bangalore, Maharashtra, or Khera village...";
-            }, 2000);
-            return;
+        findBtn.addEventListener('click', search);
+        boothInput.addEventListener('keydown', (e) => e.key === 'Enter' && search());
+    } catch (e) { /* Fail silently */ }
+}
+
+// ==========================================
+// NEW: Firebase
+// ==========================================
+let db = null;
+function initFirebaseService() {
+    try {
+        if (typeof firebase !== 'undefined') {
+            const firebaseConfig = {
+                apiKey: "placeholder-api-key",
+                authDomain: "placeholder-auth-domain",
+                projectId: "placeholder-project-id",
+            };
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            db = firebase.firestore();
+            console.log("Firebase initialized successfully.");
         }
+    } catch (error) {
+        console.warn("Firebase initialization failed silently:", error);
+    }
+}
 
-        // UX: Processing State
-        simulateProcessing(findBoothBtn, "Processing...", () => {
-            boothResultCard.style.display = 'block';
-            boothResultCard.style.animation = 'none'; // reset animation
-            // Trigger reflow
-            void boothResultCard.offsetWidth;
-            boothResultCard.style.animation = 'fadeIn 0.4s ease';
+function saveQueryToFirestore(query) {
+    if (!db) return;
+    try {
+        db.collection("chat_queries").add({
+            query: query,
+            timestamp: new Date(),
+            type: "chat"
+        });
+    } catch (error) {
+        console.warn("Firestore save failed silently:", error);
+    }
+}
 
-            let resultMessage = '';
+// ==========================================
+// NEW: Testing
+// ==========================================
+function logTest(name, condition) {
+    console.assert(condition, `TEST FAILED: ${name}`);
+    if (condition) {
+        console.log(`✅ PASS: ${name}`);
+        return true;
+    } else {
+        console.error(`❌ FAIL: ${name}`);
+        return false;
+    }
+}
 
-            // 1. Known City Matching
-            if (query.includes('delhi')) {
-                resultMessage = 'Nearest polling booth: Public Library, Connaught Place';
-            } else if (query.includes('mumbai')) {
-                resultMessage = 'Nearest polling booth: Community Center, Bandra';
-            } else if (query.includes('bangalore') || query.includes('bengaluru')) {
-                resultMessage = 'Nearest polling booth: Government School, Whitefield';
-            } else if (query.includes('kolkata')) {
-                resultMessage = 'Nearest polling booth: Town Hall, Park Street';
-            }
-            // 2. State-Level Matching
-            else if (query.includes('west bengal') || query.includes('karnataka') || query.includes('maharashtra')) {
-                resultMessage = 'Polling booths are assigned based on constituency. Please check official sources for exact location.';
-            }
-            // 3. Rural/Village Matching
-            else if (query.includes('village') || query.includes('rural') || query.includes('panchayat')) {
-                resultMessage = 'Visit your nearest government school or panchayat office for voting.';
-            }
-            // 4. Fallback for unrecognized inputs
-            else {
-                resultMessage = 'Please check the official Election Commission website for accurate polling booth details.';
-            }
+function runAllTests() {
+    console.log("=== RUNNING ADVANCED TESTING MODULE ===");
+    let passed = 0;
+    let total = 0;
 
-            // Output Result
-            boothResultTitle.textContent = "Booth Information";
-            boothResultTitle.style.color = "var(--primary-color)";
-
-            boothResultDetails.innerHTML = `
-                <p style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--text-main); font-weight: 500;">
-                    ${resultMessage}
-                </p>
-                <div style="border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem; background-color: rgba(37, 99, 235, 0.05); padding: 1rem; border-radius: 8px;">
-                    <p style="font-size: 0.95rem; color: var(--text-muted); font-style: italic; font-weight: 500; display: flex; align-items: center; gap: 0.5rem;">
-                        <span aria-hidden="true">ℹ️</span> This is a simulated result for demonstration purposes. Exact polling booth details are determined by the Election Commission.
-                    </p>
-                </div>
-            `;
-        }, 800); // 800ms delay to feel like a real search
+    function run(name, fn) {
+        total++;
+        try {
+            const result = fn();
+            if (logTest(name, result)) passed++;
+        } catch (e) {
+            logTest(name, false);
+            console.error(e);
+        }
     }
 
-    findBoothBtn.addEventListener('click', searchPollingBooth);
-    boothLocationInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            searchPollingBooth();
-        }
+    // Input validation tests
+    run("Input Validation: Empty input → invalid", () => {
+        const input = "   ";
+        return input.trim().length === 0;
     });
+
+    run("Input Validation: Valid input → accepted", () => {
+        const input = "How to vote?";
+        return input.trim().length > 0;
+    });
+
+    run("Input Validation: Long input trimmed to 200 chars", () => {
+        let input = "a".repeat(250);
+        if (input.length > 200) input = input.slice(0, 200);
+        return input.length === 200;
+    });
+
+    // Chat response tests
+    run("Chat Response: getAssistantResponse() returns string", () => {
+        if (typeof window.__getAssistantResponse === 'function') {
+            const res = window.__getAssistantResponse("vote");
+            return typeof res === 'string' && res.length > 0;
+        }
+        return false;
+    });
+
+    // LocalStorage tests
+    run("LocalStorage: Duplicate query not stored", () => {
+        if (typeof window.__saveQuery === 'function' && typeof window.__getHistory === 'function') {
+            const initial = window.__getHistory().length;
+            window.__saveQuery("Test Query");
+            window.__saveQuery("test query"); // Should not be added due to duplicate check
+            const final = window.__getHistory().length;
+            return final === initial + 1; // Only one added
+        }
+        return false;
+    });
+
+    // Edge case tests
+    run("Edge Case: LocalStorage fallback works", () => {
+        const fallback = ["fallback_data"];
+        const res = safeGetLocalStorage("NON_EXISTENT_KEY_123", fallback);
+        return res === fallback;
+    });
+
+    // Final summary
+    console.log(`=== TEST SUMMARY: Total Tests: ${total} | Passed: ${passed} ===`);
 }

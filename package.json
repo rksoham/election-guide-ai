@@ -1,0 +1,13 @@
+{
+  "name": "election-guide-ai",
+  "version": "1.0.0",
+  "description": "Election Guide Application",
+  "main": "script.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  }
+}

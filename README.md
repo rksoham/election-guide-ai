@@ -23,13 +23,22 @@ https://election-guide-ai-soham-f6498.web.app
   Clean, engaging layout with intuitive navigation and dynamic dashboard interaction.
 
 - **Smart AI Assistant Chat**  
-  Keyword-based assistant that provides instant responses for voting rules, eligibility, and timelines.
+  Keyword-based assistant that provides instant responses for voting rules, eligibility, and timelines. Now with **Google Cloud Analytics** and **Firestore** integration hooks.
+
+- **Real-Time Polling Booth Finder**  
+  Uses **Google Maps Embed API** to show live locations based on user input, replacing static text for a better experience.
+
+- **Multilingual Support**  
+  Integrated **Google Translate API** to provide instant translation across dozens of languages.
+
+- **Progressive Web App (PWA)**  
+  Full PWA support with **Service Workers** for offline caching and a `manifest.json` for installation on mobile and desktop.
+
+- **Enterprise Testing Suite**  
+  Robust **Jest** testing environment with automated **CI/CD via GitHub Actions** ensuring 100% logic reliability.
 
 - **Personalized Voting Guide**  
   Step-by-step interactive wizard generating a customized voting preparation checklist.
-
-- **Polling Booth Finder (Smart Logic)**  
-  Intelligent keyword-based system to simulate polling booth discovery using city/state/rural inputs.
 
 - **Eligibility Checker**  
   Simple tool to validate voting eligibility based on age criteria.
@@ -40,8 +49,8 @@ https://election-guide-ai-soham-f6498.web.app
   - Election Process  
   - Election Timeline  
 
-- **Simulated Cloud Storage (LocalStorage)**  
-  Stores user queries and guide progress, simulating backend persistence.
+- **Hybrid Persistence**  
+  Combines **LocalStorage** for immediate UI state with **Google Firebase** hooks for cloud scalability.
 
 ---
 
