@@ -58,7 +58,7 @@ function simulateProcessing(btn, processingText, callback, delay = 600) {
     const originalText = btn.textContent;
     btn.textContent = processingText;
     btn.disabled = true;
-    
+
     setTimeout(() => {
         btn.textContent = originalText;
         btn.disabled = false;
@@ -76,19 +76,19 @@ function initNavigation() {
 
     function navigateToSection(targetId) {
         if (!targetId) return;
-        
+
         // Remove active states efficiently
         navButtons.forEach(b => b.classList.remove('active'));
         sections.forEach(s => s.classList.remove('active'));
         dashboardCards.forEach(c => c.classList.remove('active-card'));
-        
+
         // Add active state to target top navigation tab
         const targetBtn = document.querySelector(`.nav-btn[data-section="${targetId}"]`);
         if (targetBtn) targetBtn.classList.add('active');
-        
+
         const targetSection = document.getElementById(targetId);
         if (targetSection) targetSection.classList.add('active');
-        
+
         // Scroll screen to top smoothly
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -132,7 +132,7 @@ function initEligibilityWidget() {
     function handleEligibilityCheck() {
         const inputValue = ageInput.value.trim();
         const age = parseInt(inputValue, 10);
-        
+
         // Input validation
         if (inputValue === '' || isNaN(age) || age < 0) {
             eligResult.textContent = "❌ Please enter a valid numerical age.";
@@ -174,7 +174,7 @@ function initChatAssistant() {
     const popupSendBtn = document.getElementById('send-btn');
     const chatMessages = document.getElementById('chat-messages');
     const suggestionBtns = document.querySelectorAll('.sugg-btn');
-    
+
     // Mini Panel Elements
     const miniChatInput = document.getElementById('mini-chat-input');
     const miniSendBtn = document.getElementById('mini-send-btn');
@@ -194,51 +194,58 @@ function initChatAssistant() {
      */
     function getAssistantResponse(query) {
         const lowerQuery = query.toLowerCase();
-        
+
         const responses = {
             vote: [
-                "To vote, you generally need to: 1. Register, 2. Find your polling location, 3. Bring a valid ID, and 4. Cast your ballot. See the 'How to Vote' tab for details!",
-                "Voting is simple! Ensure you are registered, locate your booth, and carry a valid photo ID.",
-                "Make sure you're registered to vote, know your polling station, and have your ID ready for Election Day."
+                "To vote, you need to be registered, carry a valid ID, and visit your assigned polling booth.",
+                "Voting requires registration, identity verification, and visiting your polling station.",
+                "Ensure you are registered and bring valid ID when you go to vote."
             ],
             eligibility: [
-                "Voting eligibility usually requires you to be a citizen and at least 18 years old. Use our Eligibility tab to check!",
-                "To be eligible, you must be a citizen of the country and 18 years of age or older.",
-                "Generally, any citizen who is 18 or older can vote. Check the Eligibility section for specifics."
+                "You must be at least 18 years old and a citizen to be eligible to vote.",
+                "Eligibility generally requires age above 18 and citizenship.",
+                "Use the eligibility section to verify your voting status."
             ],
             document: [
-                "To vote, you are generally required to carry a valid photo ID, such as a Voter ID card, Aadhar card, or Passport.",
-                "Valid IDs typically include your Voter ID, Driving License, Passport, or PAN card.",
-                "Make sure to bring an approved photo ID like a Voter ID card when you go to the polling booth."
+                "Carry a valid ID such as Voter ID, Aadhaar, Passport, or Driving License.",
+                "Accepted IDs include Voter ID, Passport, PAN, or Driving License.",
+                "Make sure to bring an official government ID for voting."
             ],
             process: [
-                "The election process involves registration, primary elections to select party nominees, campaigning, and the general election.",
-                "It starts with candidate declarations, moves through primary elections, and concludes with the general election.",
-                "Elections involve declaring candidacy, campaigning, holding primaries, and finally the general public vote."
+                "The election process includes registration, campaigning, and voting.",
+                "Elections involve candidate nomination, campaigning, and final voting.",
+                "It starts with registration and ends with casting your vote."
             ],
             timeline: [
-                "The election timeline spans several months, typically beginning with candidate declarations early in the year and ending with Election Day in November.",
-                "Key dates include early registration, primary votes in spring/summer, and the main Election Day in November.",
-                "Check the 'Election Timeline' tab for a detailed month-by-month breakdown of the election cycle."
+                "Election timelines include registration, campaigning, and voting phases.",
+                "Key phases include nomination, campaigning, and final election day.",
+                "Refer to the timeline section for detailed stages."
             ],
             hello: [
-                "Hi there! How can I help you understand the election process today?",
-                "Hello! Welcome to your Smart Election Assistant. What can I answer for you?",
-                "Greetings! Ask me anything about voting, eligibility, or the election process."
+                "Hello! How can I assist you with election information?",
+                "Hi! Ask me anything about voting or eligibility.",
+                "Welcome! I’m here to help you understand elections."
             ]
         };
 
-        const getRandomResponse = (arr) => arr[Math.floor(Math.random() * arr.length)];
+        const synonyms = {
+            vote: ['vote', 'voting', 'cast vote'],
+            eligibility: ['eligible', 'eligibility', 'age'],
+            document: ['document', 'id', 'proof'],
+            process: ['process', 'procedure'],
+            timeline: ['timeline', 'when', 'date'],
+            hello: ['hello', 'hi', 'hey']
+        };
 
-        if (lowerQuery.includes('vote') || lowerQuery.includes('voting')) return getRandomResponse(responses.vote);
-        if (lowerQuery.includes('eligibility') || lowerQuery.includes('eligible') || lowerQuery.includes('age')) return getRandomResponse(responses.eligibility);
-        if (lowerQuery.includes('document') || lowerQuery.includes('id')) return getRandomResponse(responses.document);
-        if (lowerQuery.includes('process') || lowerQuery.includes('election')) return getRandomResponse(responses.process);
-        if (lowerQuery.includes('timeline') || lowerQuery.includes('when')) return getRandomResponse(responses.timeline);
-        if (lowerQuery.includes('hello') || lowerQuery.includes('hi')) return getRandomResponse(responses.hello);
+        const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-        // Fallback response
-        return "I'm your Election Assistant! I might not know the exact answer to that, but try asking me about 'how to vote', 'eligibility', or the 'election timeline'.";
+        for (let key in synonyms) {
+            if (synonyms[key].some(word => lowerQuery.includes(word))) {
+                return getRandom(responses[key]);
+            }
+        }
+
+        return "I’m not sure about that. Try asking about voting, eligibility, documents, or election timeline.";
     }
 
     /**
@@ -264,7 +271,7 @@ function initChatAssistant() {
 
         // Add user message & save to history
         addMessageToChat(safeQuery, 'user');
-        
+
         // Dispatch custom event to notify history module (loose coupling)
         document.dispatchEvent(new CustomEvent('saveQueryHistory', { detail: safeQuery }));
 
@@ -278,7 +285,15 @@ function initChatAssistant() {
         // Delayed AI Response for better UX
         setTimeout(() => {
             procDiv.remove();
-            addMessageToChat(getAssistantResponse(safeQuery), 'ai');
+
+            try {
+                const response = getAssistantResponse(safeQuery);
+                addMessageToChat(response, 'ai');
+            } catch (err) {
+                console.error(err);
+                addMessageToChat("Something went wrong. Please try again.", 'ai');
+            }
+
         }, 700);
     }
 
@@ -286,7 +301,10 @@ function initChatAssistant() {
      * Validates input fields before submission
      */
     function handleChatValidation(inputElement) {
-        if (!inputElement.value.trim()) {
+        const value = inputElement.value.trim();
+
+        // Empty validation
+        if (!value) {
             const originalPlaceholder = inputElement.placeholder;
             inputElement.placeholder = "Please enter a message...";
             inputElement.style.borderColor = "var(--error)";
@@ -296,13 +314,19 @@ function initChatAssistant() {
             }, 2000);
             return false;
         }
+
+        // 🔥 ADD THIS (length validation)
+        if (value.length > 200) {
+            inputElement.value = value.slice(0, 200);
+        }
+
         return true;
     }
 
     // Connect inputs
     function setupChatInput(inputEl, btnEl) {
         if (!inputEl || !btnEl) return;
-        
+
         btnEl.addEventListener('click', () => {
             if (handleChatValidation(inputEl)) {
                 processChatQuery(inputEl.value);
@@ -328,6 +352,13 @@ function initChatAssistant() {
     suggestionBtns.forEach(btn => {
         btn.addEventListener('click', () => processChatQuery(btn.textContent));
     });
+    // Accessibility: close popup with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const popup = document.getElementById('chat-popup');
+            if (popup) popup.classList.add('hidden');
+        }
+    });
 }
 
 // ==========================================
@@ -346,10 +377,12 @@ function initQueryHistory() {
     function loadHistory() {
         // Use safe parsing to prevent crashes
         const queries = safeGetLocalStorage(STORAGE_KEY, []);
-        
+
         // Prevent unnecessary DOM manipulation if we can
-        historyList.innerHTML = '';
-        
+        while (historyList.firstChild) {
+            historyList.removeChild(historyList.firstChild);
+        }
+
         if (!Array.isArray(queries) || queries.length === 0) {
             const li = document.createElement('li');
             li.textContent = 'Ready to assist! Ask a question to see your history logged here.';
@@ -362,7 +395,7 @@ function initQueryHistory() {
         }
 
         clearHistoryBtn.style.display = 'block'; // Ensure it's visible when active
-        
+
         // Use document fragment for better performance
         const fragment = document.createDocumentFragment();
         queries.forEach(q => {
@@ -377,17 +410,21 @@ function initQueryHistory() {
      * Saves a new query to LocalStorage.
      */
     function saveQuery(query) {
-        let queries = safeGetLocalStorage(STORAGE_KEY, []);
-        if (!Array.isArray(queries)) queries = [];
-        
-        queries.unshift(query); // Add to the top of the list
-        
-        // Keep only top 20 queries to prevent storage bloat
-        if (queries.length > 20) queries.pop();
-        
-        safeSetLocalStorage(STORAGE_KEY, queries);
-        loadHistory(); // Refresh UI
+    let queries = safeGetLocalStorage(STORAGE_KEY, []);
+    if (!Array.isArray(queries)) queries = [];
+
+    const cleanedQuery = query.trim().toLowerCase();
+    if (queries.some(q => q.toLowerCase() === cleanedQuery)) return;
+
+    queries.unshift(query.trim());
+
+    if (queries.length > 20) {
+        queries = queries.slice(0, 20);
     }
+
+    safeSetLocalStorage(STORAGE_KEY, queries);
+    loadHistory();
+}
 
     // Listen for custom event from chat module
     document.addEventListener('saveQueryHistory', (e) => {
@@ -428,7 +465,7 @@ function initPersonalizedGuide() {
     const guideQ2Options = document.querySelectorAll('#guide-q2 .option-btn');
     const guideQ3Options = document.querySelectorAll('#guide-q3 .option-btn');
     const restartGuideBtn = document.getElementById('restart-guide-btn');
-    
+
     const resultTitle = document.getElementById('result-title');
     const resultContent = document.getElementById('result-content');
     const introText = document.getElementById('guide-intro-text');
@@ -453,9 +490,9 @@ function initPersonalizedGuide() {
      */
     function evaluateGuideResult() {
         showGuideStep(guideResult);
-        
+
         const age = parseInt(guideResponses.age, 10);
-        
+
         if (age < 18) {
             resultTitle.textContent = "Not Eligible Yet";
             resultTitle.style.color = "var(--error)";
@@ -491,7 +528,7 @@ function initPersonalizedGuide() {
         guideResponses = { ...defaultState };
         guideAgeInput.value = '';
         localStorage.removeItem(GUIDE_STORAGE_KEY);
-        
+
         // Reset intro UI
         introText.textContent = "Get a step-by-step personalized guide on how to prepare for voting based on your details.";
         startGuideBtn.textContent = "Start My Voting Guide";
@@ -524,7 +561,7 @@ function initPersonalizedGuide() {
             alert("Please enter a valid age.");
             return;
         }
-        
+
         simulateProcessing(guideNext1Btn, "Saving...", () => {
             guideResponses.age = age;
             safeSetLocalStorage(GUIDE_STORAGE_KEY, guideResponses);
@@ -553,7 +590,7 @@ function initPersonalizedGuide() {
                 simulateProcessing(btn, "Saving...", () => {
                     guideResponses[stepKey] = btn.getAttribute('data-value');
                     safeSetLocalStorage(GUIDE_STORAGE_KEY, guideResponses);
-                    
+
                     if (checkResult) {
                         evaluateGuideResult();
                     } else if (nextStepElement) {
@@ -586,10 +623,10 @@ function initPersonalizedGuide() {
     const savedData = safeGetLocalStorage(GUIDE_STORAGE_KEY, null);
     if (savedData && typeof savedData === 'object') {
         guideResponses = { ...defaultState, ...savedData };
-        
+
         if (guideResponses.age !== null) {
             guideAgeInput.value = guideResponses.age;
-            
+
             // Activate the Welcome Back message
             introText.innerHTML = "<strong>Welcome back, continue your guide.</strong>";
             startGuideBtn.textContent = "Resume My Guide";
@@ -616,7 +653,7 @@ function initPollingBooth() {
     function searchPollingBooth() {
         const originalQuery = boothLocationInput.value.trim();
         let query = originalQuery.toLowerCase();
-        
+
         // Normalize specific inputs
         const stateMappings = {
             'wb': 'west bengal',
@@ -657,7 +694,7 @@ function initPollingBooth() {
                 resultMessage = 'Nearest polling booth: Government School, Whitefield';
             } else if (query.includes('kolkata')) {
                 resultMessage = 'Nearest polling booth: Town Hall, Park Street';
-            } 
+            }
             // 2. State-Level Matching
             else if (query.includes('west bengal') || query.includes('karnataka') || query.includes('maharashtra')) {
                 resultMessage = 'Polling booths are assigned based on constituency. Please check official sources for exact location.';
@@ -665,7 +702,7 @@ function initPollingBooth() {
             // 3. Rural/Village Matching
             else if (query.includes('village') || query.includes('rural') || query.includes('panchayat')) {
                 resultMessage = 'Visit your nearest government school or panchayat office for voting.';
-            } 
+            }
             // 4. Fallback for unrecognized inputs
             else {
                 resultMessage = 'Please check the official Election Commission website for accurate polling booth details.';
@@ -674,7 +711,7 @@ function initPollingBooth() {
             // Output Result
             boothResultTitle.textContent = "Booth Information";
             boothResultTitle.style.color = "var(--primary-color)";
-            
+
             boothResultDetails.innerHTML = `
                 <p style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--text-main); font-weight: 500;">
                     ${resultMessage}
