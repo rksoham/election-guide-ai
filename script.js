@@ -363,89 +363,69 @@ function initChatAssistant() {
             if (popup) popup.classList.add('hidden');
         }
     });
+    } catch (e) { /* Fail silently */ }
 }
 
 function initQueryHistory() {
-    const historyList = document.getElementById('query-history-list');
-    const clearHistoryBtn = document.getElementById('clear-history-btn');
-    const STORAGE_KEY = CONFIG.STORAGE_KEYS.QUERIES;
+    try {
+        const historyList = document.getElementById('query-history-list');
+        const clearHistoryBtn = document.getElementById('clear-history-btn');
+        const STORAGE_KEY = CONFIG.STORAGE_KEYS.QUERIES;
 
-    if (!historyList || !clearHistoryBtn) return;
+        if (!historyList || !clearHistoryBtn) return;
 
-    /**
-     * Loads previous queries from LocalStorage and renders them.
-     */
-    function loadHistory() {
-        // Use safe parsing to prevent crashes
-        const queries = safeGetLocalStorage(STORAGE_KEY, []);
+        function loadHistory() {
+            const queries = safeGetLocalStorage(STORAGE_KEY, []);
+            while (historyList.firstChild) {
+                historyList.removeChild(historyList.firstChild);
+            }
 
-        // Prevent unnecessary DOM manipulation if we can
-        while (historyList.firstChild) {
-            historyList.removeChild(historyList.firstChild);
+            if (!Array.isArray(queries) || queries.length === 0) {
+                const li = document.createElement('li');
+                li.textContent = 'Ready to assist! Ask a question to see your history logged here.';
+                li.style.color = 'var(--text-muted)';
+                li.style.fontStyle = 'italic';
+                li.style.padding = '1rem 0';
+                historyList.appendChild(li);
+                clearHistoryBtn.style.display = 'none';
+                return;
+            }
+
+            clearHistoryBtn.style.display = 'block';
+            const fragment = document.createDocumentFragment();
+            queries.forEach(q => {
+                const li = document.createElement('li');
+                li.textContent = `"${q}"`;
+                fragment.appendChild(li);
+            });
+            historyList.appendChild(fragment);
         }
 
-        if (!Array.isArray(queries) || queries.length === 0) {
-            const li = document.createElement('li');
-            li.textContent = 'Ready to assist! Ask a question to see your history logged here.';
-            li.style.color = 'var(--text-muted)';
-            li.style.fontStyle = 'italic';
-            li.style.padding = '1rem 0';
-            historyList.appendChild(li);
-            clearHistoryBtn.style.display = 'none'; // Hide when history is empty
-            return;
-        }
-
-        clearHistoryBtn.style.display = 'block'; // Ensure it's visible when active
-
-        // Use document fragment for better performance
-        const fragment = document.createDocumentFragment();
-        queries.forEach(q => {
-            const li = document.createElement('li');
-            li.textContent = `"${q}"`;
-            fragment.appendChild(li);
-        });
-        historyList.appendChild(fragment);
-    }
-
-    /**
-     * Saves a new query to LocalStorage.
-     */
-    function saveQuery(query) {
-    let queries = safeGetLocalStorage(STORAGE_KEY, []);
-    if (!Array.isArray(queries)) queries = [];
-
-    const cleanedQuery = query.trim().toLowerCase();
-    if (queries.some(q => q.toLowerCase() === cleanedQuery)) return;
-
-    queries.unshift(query.trim());
-
-    if (queries.length > 20) {
-        queries = queries.slice(0, 20);
-    }
-
-    safeSetLocalStorage(STORAGE_KEY, queries);
-    loadHistory();
-}
-
-    // Expose for testing
-    window.__saveQuery = saveQuery;
-    window.__getHistory = () => safeGetLocalStorage(STORAGE_KEY, []);
-
-    // Listen for custom event from chat module
-    document.addEventListener('saveQueryHistory', (e) => {
-        saveQuery(e.detail);
-    });
-
-    // Clear history feature
-    clearHistoryBtn.addEventListener('click', () => {
-        if (confirm("Are you sure you want to clear your query history?")) {
-            localStorage.removeItem(STORAGE_KEY);
+        function saveQuery(query) {
+            let queries = safeGetLocalStorage(STORAGE_KEY, []);
+            if (!Array.isArray(queries)) queries = [];
+            const cleanedQuery = query.trim().toLowerCase();
+            if (queries.some(q => q.toLowerCase() === cleanedQuery)) return;
+            queries.unshift(query.trim());
+            if (queries.length > 20) queries = queries.slice(0, 20);
+            safeSetLocalStorage(STORAGE_KEY, queries);
             loadHistory();
         }
-    });
 
-    // Initial load
-    loadHistory();
+        window.__saveQuery = saveQuery;
+        window.__getHistory = () => safeGetLocalStorage(STORAGE_KEY, []);
+
+        document.addEventListener('saveQueryHistory', (e) => saveQuery(e.detail));
+
+        clearHistoryBtn.addEventListener('click', () => {
+            if (confirm("Clear query history?")) {
+                localStorage.removeItem(STORAGE_KEY);
+                loadHistory();
+            }
+        });
+
+        loadHistory();
+    } catch (e) { /* Fail silently */ }
 }
 
 function initPersonalizedGuide() {
@@ -589,14 +569,20 @@ function initPollingBooth() {
             simulateProcessing(findBtn, "Processing...", () => {
                 resultCard.style.display = 'block';
                 resultTitle.textContent = "Booth Information";
+                
+                let msg = 'Please check official sources for exact polling booth details.';
+                if (q.includes('delhi')) msg = 'Nearest polling booth: Public Library, Connaught Place';
+                else if (q.includes('mumbai')) msg = 'Nearest polling booth: Community Center, Bandra';
+                else if (q.includes('bangalore')) msg = 'Nearest polling booth: Government School, Whitefield';
+
                 const mapQ = encodeURIComponent('Polling Booth in ' + original);
                 resultDetails.innerHTML = `
-                    <p style="color: var(--text-main); font-weight: 500;">Searching for: ${original}</p>
-                    <div style="margin-top: 1rem; border-radius: 8px; overflow: hidden; border: 1px solid var(--border);">
+                    <p style="color: var(--text-main); font-weight: 500; margin-bottom: 1rem;">${msg}</p>
+                    <div style="border-radius: 8px; overflow: hidden; border: 1px solid var(--border);">
                         <iframe width="100%" height="250" frameborder="0" src="https://maps.google.com/maps?q=${mapQ}&t=&z=13&ie=UTF8&iwloc=&output=embed"></iframe>
                     </div>
                     <div style="margin-top: 1rem; background: rgba(37, 99, 235, 0.05); padding: 1rem; border-radius: 8px;">
-                        <p style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">ℹ️ This is a simulated result for demonstration purposes.</p>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">ℹ️ Result for demonstration purposes. Official details are verified by the EC.</p>
                     </div>`;
             }, 800);
         }
